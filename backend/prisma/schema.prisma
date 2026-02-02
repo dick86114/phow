@@ -1,0 +1,88 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  FAMILY
+}
+
+enum Visibility {
+  PUBLIC
+  PRIVATE
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  password  String
+  role      Role     @default(FAMILY)
+  photos    Photo[]
+  comments  Comment[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Photo {
+  id          Int        @id @default(autoincrement())
+  title       String
+  description String?    @db.Text
+  url         String
+  thumbUrl    String
+  exif        Json?
+  location    String?
+  camera      String?
+  lens        String?
+  story       String?    @db.Text
+  visibility  Visibility @default(PUBLIC)
+  user        User       @relation(fields: [userId], references: [id])
+  userId      Int
+  comments    Comment[]
+  likes       Like[]
+  tags        Tag[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([createdAt])
+  @@index([visibility])
+}
+
+model Comment {
+  id        Int       @id @default(autoincrement())
+  content   String    @db.Text
+  photo     Photo     @relation(fields: [photoId], references: [id], onDelete: Cascade)
+  photoId   Int
+  user      User?     @relation(fields: [userId], references: [id])
+  userId    Int?
+  nickname  String?   // For visitors
+  email     String?   // For visitors
+  parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  parentId  Int?
+  replies   Comment[] @relation("CommentReplies")
+  ip        String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Like {
+  id        Int      @id @default(autoincrement())
+  photo     Photo    @relation(fields: [photoId], references: [id], onDelete: Cascade)
+  photoId   Int
+  ip        String
+  createdAt DateTime @default(now())
+
+  @@unique([photoId, ip, createdAt]) // Simplified, logic will handle "once per day"
+}
+
+model Tag {
+  id     Int     @id @default(autoincrement())
+  name   String  @unique
+  photos Photo[]
+}

@@ -1,0 +1,23 @@
+services:
+  backend:
+    build: ./backend
+    container_name: phow-backend
+    restart: always
+    network_mode: "host"
+    environment:
+      DATABASE_URL: "${DATABASE_URL}"
+      JWT_SECRET: "${JWT_SECRET}"
+      PORT: "${PORT}"
+      AI_API_BASE_URL: "${AI_API_BASE_URL}"
+      AI_API_KEY: "${AI_API_KEY}"
+      AI_MODEL_NAME: "${AI_MODEL_NAME}"
+    volumes:
+      - ./backend/uploads:/app/uploads
+
+  frontend:
+    build: ./frontend
+    container_name: phow-frontend
+    restart: always
+    network_mode: "host"
+    depends_on:
+      - backend
